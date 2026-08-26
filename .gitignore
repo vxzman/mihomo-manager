@@ -1,0 +1,27 @@
+# ── 编译产物 ──────────────────────────────────────────────
+# 后端二进制（前端产物内嵌，部署用；发布仓库不含二进制）
+/mihomo-manager
+
+# ── 前端 ──────────────────────────────────────────────────
+# 依赖与构建产物：clone 后执行 npm install && npm run build 生成
+web/node_modules/
+# web/dist 保留占位 index.html（见 main.go go:embed 注释），
+# 未构建前端时 go build 仍可通过；正式前端产物不入库
+web/dist/*
+!web/dist/index.html
+
+# ── 本地开发 ──────────────────────────────────────────────
+# Claude Code 本地设置（机器相关，不可发布）
+.claude/
+# 内部方案文档（不发布）
+PLAN.md
+# 运行时 Unix socket（dev/manager.yaml 的 cli_socket）
+*.sock
+
+# ── Go ────────────────────────────────────────────────────
+*.test
+*.out
+coverage.*
+
+# ── 系统杂项 ──────────────────────────────────────────────
+.DS_Store

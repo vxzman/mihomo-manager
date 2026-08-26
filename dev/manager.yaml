@@ -1,0 +1,101 @@
+# dev fixture：相对目录以本文件所在位置为基准解析，避免写死机器路径
+dirs:
+  config_dir: etc-mihomo
+  data_dir: /var/lib/mihomo
+
+daemon:
+  web_addr: "127.0.0.1:8081"
+  cli_socket: dev/mihomo-manager.sock
+  apply_delay_ms: 1000
+  reconcile_interval: 5s
+
+modes:
+  tun:
+    label: TUN
+    unit: mihomo@tun
+    config: config_tun.yaml
+    routing:
+      rule_index: 9000
+      table_index: 2022
+    cleanup:
+      nft_tables:
+        - inet mihomo
+    preset: |
+      - name: tun-in
+        type: tun
+        stack: system
+        dns-hijack:
+          - any:53
+          - tcp://any:53
+        device: tun0
+        mtu: 1500
+        gso: true
+        gso-max-size: 65536
+        udp-timeout: 300
+        iproute2-table-index: 2022
+        iproute2-rule-index: 9000
+        endpoint-independent-nat: true
+        auto-detect-interface: true
+        auto-route: true
+        auto-redirect: true
+        inet4-address:
+          - 192.0.2.0/30
+  tproxy:
+    label: TPROXY
+    unit: mihomo@tproxy
+    config: config_tproxy.yaml
+    env:
+      tproxy_port: 22016
+      exclude_gid: 988
+      routing_mark: 6666
+      fwmark: 1
+      table_id: 100
+      nftables_table: mihomo_tproxy4
+    preset: |
+      - name: tproxy-in
+        type: tproxy
+        port: 22016
+        listen: 0.0.0.0
+        udp: true
+  redir-tproxy:
+    label: REDIR-TPROXY
+    unit: mihomo@redir-tproxy
+    config: config_redir-tproxy.yaml
+    env:
+      tproxy_port: 22016
+      redirect_port: 22017
+      exclude_gid: 988
+      routing_mark: 6666
+      fwmark: 1
+      table_id: 100
+      nftables_table: mihomo_redir_tproxy4
+    preset: |
+      - name: tproxy-in
+        type: tproxy
+        port: 22016
+        listen: 0.0.0.0
+        udp: true
+      - name: redir-in
+        type: redir
+        port: 22017
+        listen: 0.0.0.0
+  socks:
+    label: SOCKS
+    unit: mihomo@socks
+    config: config_socks.yaml
+    preset: |
+      - name: mixed-in
+        type: mixed
+        port: 20260
+        listen: 0.0.0.0
+        udp: true
+  server:
+    label: SERVER
+    unit: mihomo@server
+    config: config_server.yaml
+    preset: |
+      - name: server-in
+        type: mixed
+        port: 20261
+        listen: 0.0.0.0
+        udp: true
