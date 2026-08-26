@@ -1,11 +1,17 @@
 # mihomo-manager
 
-Mihomo 运行模式管理器：**单一 Go 二进制**（守护进程 + CLI），Vue 3 前端内嵌，透明代理规则由守护进程编排并与 `mihomo@` 实例同生共死。
+面向 **Linux 服务器裸跑 mihomo 内核**的 Web 面板：**单一 Go 二进制**（守护进程 + CLI），Vue 3 前端内嵌。通过面板一键切换 tun / socks / tproxy / redir-tproxy / server 五种透明代理模式，nft/ip 规则由守护进程编排并与 `mihomo@` 实例同生共死。
 
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](go.mod)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > A single-binary mode manager for [mihomo](https://github.com/MetaCubeX/mihomo): manages tun / tproxy / redir-tproxy / socks / server modes, orchestrates nftables & policy-routing rules that live and die with each `mihomo@` instance, with an embedded Vue 3 web panel.
+
+## 适用场景
+
+- 服务器上已装 mihomo 内核（`/usr/local/bin/mihomo`），不想逐个手写 systemd 单元与 nftables/策略路由规则
+- 需要在 TUN 虚拟网卡 / TPROXY / REDIR-TPROXY / SOCKS / 独立入站之间频繁切换
+- 想要一个轻量 Web 面板 + CLI 管理，而不引入整套代理客户端
 
 ## 特性
 
@@ -35,22 +41,32 @@ Mihomo 运行模式管理器：**单一 Go 二进制**（守护进程 + CLI）�
 └── bash/                # 旧版 bash 脚本归档（移植参考，新版不再使用）
 ```
 
-## 本地构建
+## 从源码编译
+
+环境要求：Go 1.22+、Node.js 18+（Vite 5 前端构建）。
 
 ```bash
-# 前端（构建产物 web/dist/ 内嵌进二进制；未构建时 go build 使用占位页）
+git clone git@github.com:vxzman/mihomo-manager.git
+cd mihomo-manager
+
+# 1. 构建前端（产物 web/dist/ 内嵌进二进制；跳过此步 go build 也能通过，但面板为占位页）
 cd web && npm install && npm run build
 cd ..
 
-# 后端（-ldflags 注入版本/编译信息，部署后可用 mihomo-manager info 核对是否最新）
+# 2. 构建后端（-ldflags 注入版本/编译信息，部署后可用 mihomo-manager info 核对是否最新）
 go build -ldflags "\
   -X main.version=$(git describe --tags --always --dirty 2>/dev/null || echo dev) \
   -X main.commit=$(git rev-parse --short HEAD 2>/dev/null || echo unknown) \
   -X main.buildTime=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
   -o mihomo-manager .
+
+# 3. 验证产物
+./mihomo-manager info
 ```
 
 不注入 ldflags 也能构建，`mihomo-manager info` 会显示 `dev/unknown` 默认值（仅建议本地调试使用）。
+
+编译产物的部署方法见下一节（无需在服务器上编译）。
 
 ## 部署到服务器（免编译，上传哪些文件）
 
