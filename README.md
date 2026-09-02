@@ -15,12 +15,13 @@
 
 ## 特性
 
-- **5 种模式**：tun / socks / tproxy / redir-tproxy / server（独立入站，默认 mixed 20261）
+- **5 种模式**：tun / socks / tproxy / redir-tproxy / server（独立入站，默认 mixed 20261）；socks 入站由端口驱动（默认 mixed 20260，面板可改）
 - **规则生命周期**：启动 `mihomo@` 实例 → 延迟套用 nft/ip 规则 → 实例停止即清理（同生共死）；守护重启自动 reconcile 兜底；tun0 消失自动清理残留
 - **回环避免双方式**：`meta skgid`（GID，优先）或 `meta mark`（路由 mark），二选一可配置
 - **统一配置**：`/opt/mihomo-manager/manager.yaml` 是规则数字/env/预定义入站的唯一事实源
 - **实时状态**：dbus 订阅 + SSE 推送，面板状态秒级刷新
-- **配置同步**：`config_general.yaml` + 各模式预定义入站 → `mihomo -t` 校验后生成各模式配置
+- **配置同步**：`config_general.yaml` + 各模式预定义入站（socks 由 manager.yaml 的 `env.socks_port` 生成）→ `mihomo -t` 校验后生成各模式配置
+- **面板体验**：切换按真实结果反馈（已启动/已停止/失败）；守护进程不可达时明确提示并一键重试；配置编辑器未保存修改有二次确认保护
 
 ## 目录结构
 
@@ -121,7 +122,7 @@ sudo mihomo-manager config sync            # 重新生成各模式配置（mihom
 mihomo-manager info                        # 版本/编译时间/目标平台（无需 root）
 ```
 
-安装后检查：`/opt/mihomo-manager/manager.yaml` 里 tproxy/redir-tproxy 的 `exclude_gid` 与 `id -g mihomo` 一致（不一致会环路），可在面板「系统设置」修改。tun 模式的 `device: tun0` 按实际机器调整。
+安装后检查：`/opt/mihomo-manager/manager.yaml` 里 tproxy/redir-tproxy 的 `exclude_gid` 与 `id -g mihomo` 一致（不一致会环路），可在面板「系统设置」修改。tun 模式的 `device: tun0` 按实际机器调整。socks 入站端口（默认 20260）在「系统设置 · SOCKS / SERVER」修改，保存后自动重新生成 `config_socks.yaml`；老版本 manager.yaml 里的 socks preset 会在守护进程启动时自动迁移为 `env.socks_port`。
 
 ## 监听地址与 IPv6（安全说明）
 

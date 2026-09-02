@@ -16,6 +16,7 @@ export interface Status {
 export interface EnvSettings {
   tproxy_port?: number
   redirect_port?: number
+  socks_port?: number
   exclude_gid?: number
   routing_mark?: number
   fwmark?: number
@@ -85,8 +86,10 @@ export async function saveSettings(update: Record<string, unknown>) {
 }
 
 // subscribeStatus 建立 SSE 连接；返回取消函数。
-export function subscribeStatus(onStatus: (s: Status) => void): () => void {
+// onConnect 在连接建立（true）/断开（false）时回调，用于驱动「守护进程不可达」提示。
+export function subscribeStatus(onStatus: (s: Status) => void, onConnect?: (ok: boolean) => void): () => void {
   const es = new EventSource('/events')
+  es.onopen = () => onConnect?.(true)
   es.onmessage = (ev) => {
     try {
       const msg = JSON.parse(ev.data)
@@ -97,6 +100,7 @@ export function subscribeStatus(onStatus: (s: Status) => void): () => void {
   }
   es.onerror = () => {
     // EventSource 自动重连，无需处理
+    onConnect?.(false)
   }
   return () => es.close()
 }

@@ -269,6 +269,18 @@ body::before {
   border-color: var(--border-soft);
 }
 
+/* 守护进程不可达 */
+.hero.error {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--err) 7%, rgba(255, 255, 255, 0.6)), rgba(255, 255, 255, 0.42));
+}
+.hero.error::before { display: none; }
+.hero.error .hero-icon {
+  color: var(--err);
+  background: color-mix(in srgb, var(--err) 12%, rgba(255, 255, 255, 0.65));
+  border-color: color-mix(in srgb, var(--err) 32%, rgba(255, 255, 255, 0.5));
+  box-shadow: var(--highlight), 0 8px 20px color-mix(in srgb, var(--err) 18%, transparent);
+}
+
 .hero-icon {
   width: 64px;
   height: 64px;
@@ -299,7 +311,7 @@ body::before {
 /* ═══════════════ 状态页：模式瓦片 ═══════════════ */
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 
@@ -435,6 +447,16 @@ body::before {
 .btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); box-shadow: none; }
 .btn.ghost:hover:not(:disabled) { color: var(--text); background: rgba(255, 255, 255, 0.55); }
 
+/* 保存按钮上的「未保存」呼吸红点 */
+.btn .dirty-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
 .input {
   width: 100%;
   padding: 10px 13px;
@@ -452,6 +474,12 @@ body::before {
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
   box-shadow: 0 0 0 4px rgba(94, 92, 230, 0.14);
   background: rgba(255, 255, 255, 0.85);
+}
+
+.input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.35);
 }
 
 /* ─── 深色代码编辑器（浅色主题下的深色浮岛） ─── */
@@ -583,7 +611,12 @@ textarea.code::-webkit-scrollbar-track { background: transparent; }
 }
 
 /* ═══════════════ 设置页：iOS 分组列表 ═══════════════ */
-.list.card { padding: 6px 0; margin-bottom: 20px; }
+/* overflow 裁剪：子元素（悬停底色、聚焦轮廓等）不超出圆角卡片外框 */
+.list.card { padding: 6px 0; margin-bottom: 20px; overflow: hidden; }
+
+/* 展开编辑行（TUN 预设 / SERVER 入站）贴近底部圆角弧：底部留出弧线距离，避免行底与圆弧重叠 */
+.list.card:has(> .list-details:last-child) { padding-bottom: 20px; }
+.list-details:last-child:not([open]) summary { border-bottom: none; }
 
 .list-head {
   padding: 14px 22px 6px;
@@ -660,9 +693,15 @@ textarea.code::-webkit-scrollbar-track { background: transparent; }
   cursor: pointer;
   user-select: none;
   transition: background 0.15s ease;
+  /* 浏览器默认聚焦轮廓是矩形，会超出圆角卡片外框：改为行内高亮 */
+  outline: none;
 }
 
 .list-details summary:hover { background: rgba(255, 255, 255, 0.4); }
+.list-details summary:focus-visible {
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--accent) 45%, transparent);
+}
 .list-details summary::-webkit-details-marker { display: none; }
 .list-details summary .chev { color: var(--text-3); transition: transform 0.22s var(--ease); }
 .list-details[open] summary .chev { transform: rotate(180deg); }
@@ -736,6 +775,8 @@ textarea.code::-webkit-scrollbar-track { background: transparent; }
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }
 }
+
+@keyframes pulse { 50% { opacity: 0.35; } }
 
 @keyframes sweep {
   0%, 100% { opacity: 1; }

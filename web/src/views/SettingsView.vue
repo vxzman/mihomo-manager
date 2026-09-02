@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import Icon from '../components/Icon.vue'
+import NetworkSection from '../components/NetworkSection.vue'
 import { fetchSettings, saveSettings, type ManagerSettings } from '../api'
 
 const settings = ref<ManagerSettings | null>(null)
@@ -11,11 +12,17 @@ const saving = ref(false)
 const bypassTproxy = ref<'gid' | 'mark'>('gid')
 const bypassRedir = ref<'gid' | 'mark'>('gid')
 
+// 按 exclude_gid 是否生效推导当前回环避免方式（服务端保存时二选一清零）
+function deriveBypass() {
+  if (!settings.value) return
+  bypassTproxy.value = (settings.value.modes.tproxy?.env?.exclude_gid ?? 0) > 0 ? 'gid' : 'mark'
+  bypassRedir.value = (settings.value.modes['redir-tproxy']?.env?.exclude_gid ?? 0) > 0 ? 'gid' : 'mark'
+}
+
 onMounted(async () => {
   try {
     settings.value = await fetchSettings()
-    if ((settings.value.modes.tproxy?.env?.exclude_gid ?? 0) <= 0) bypassTproxy.value = 'mark'
-    if ((settings.value.modes['redir-tproxy']?.env?.exclude_gid ?? 0) <= 0) bypassRedir.value = 'mark'
+    deriveBypass()
   } catch (e) {
     message.value = { ok: false, text: (e as Error).message }
   }
@@ -46,11 +53,18 @@ async function save() {
       modes[name] = { env, preset: s.modes[name]?.preset ?? '' }
     }
 
-    for (const name of ['socks', 'server']) {
-      if (s.modes[name]) modes[name] = { preset: s.modes[name]!.preset ?? '' }
+    // socks 入站由端口驱动；server 保留 preset 编辑
+    if (s.modes.socks) {
+      modes.socks = { env: { socks_port: s.modes.socks.env?.socks_port ?? 0 } }
+    }
+    if (s.modes.server) {
+      modes.server = { preset: s.modes.server.preset ?? '' }
     }
 
     await saveSettings(update)
+    // 重新拉取设置同步本地状态（清零结果、守护侧规范化后的值）
+    settings.value = await fetchSettings()
+    deriveBypass()
     message.value = { ok: true, text: '设置已保存' }
   } catch (e) {
     message.value = { ok: false, text: (e as Error).message }
@@ -65,9 +79,6 @@ async function save() {
     <div class="page-head-row">
       <div>
         <h1 class="page-title"><Icon name="sliders" :size="22" /> 系统设置</h1>
-        <p class="sub">
-          写入 /opt/mihomo-manager/manager.yaml——规则数字、环境变量与预定义入站的唯一事实源。
-        </p>
       </div>
       <button class="btn primary" :disabled="saving" @click="save">
         <Icon name="save" :size="15" /> 保存设置
@@ -116,97 +127,29 @@ async function save() {
       </details>
     </section>
 
-    <!-- ─── TPROXY ─── -->
-    <section class="list card">
-      <div class="list-head">TPROXY · 网络参数</div>
-      <div class="list-row">
-        <span class="row-label">TPROXY 端口（UDP）</span>
-        <input v-model.number="settings.modes.tproxy!.env!.tproxy_port" type="number" class="input input-num" />
-      </div>
-      <div class="list-row">
-        <span class="row-label">fwmark</span>
-        <input v-model.number="settings.modes.tproxy!.env!.fwmark" type="number" class="input input-num" />
-      </div>
-      <div class="list-row">
-        <span class="row-label">路由表 ID</span>
-        <input v-model.number="settings.modes.tproxy!.env!.table_id" type="number" class="input input-num" />
-      </div>
-      <div class="list-row">
-        <span class="row-label">nftables 表名</span>
-        <input v-model="settings.modes.tproxy!.env!.nftables_table" class="input" />
-      </div>
-      <div class="list-row">
-        <span class="row-label">回环避免方式</span>
-        <div class="seg-mini">
-          <button :class="{ on: bypassTproxy === 'gid' }" @click="bypassTproxy = 'gid'">GID 放行</button>
-          <button :class="{ on: bypassTproxy === 'mark' }" @click="bypassTproxy = 'mark'">Mark 放行</button>
-        </div>
-      </div>
-      <div class="list-row">
-        <span class="row-label">排除 GID（mihomo 用户组）</span>
-        <div class="control">
-          <input v-model.number="settings.modes.tproxy!.env!.exclude_gid" type="number" class="input input-num" />
-          <small class="row-hint">meta skgid · 放行 mihomo 用户组流量</small>
-        </div>
-      </div>
-      <div class="list-row">
-        <span class="row-label">路由 mark</span>
-        <div class="control">
-          <input v-model.number="settings.modes.tproxy!.env!.routing_mark" type="number" class="input input-num" />
-          <small class="row-hint">meta mark · 放行已打标流量</small>
-        </div>
-      </div>
-    </section>
+    <!-- ─── TPROXY / REDIR-TPROXY ─── -->
+    <NetworkSection
+      v-model:bypass="bypassTproxy"
+      head="TPROXY · 网络参数"
+      :env="settings.modes.tproxy!.env!"
+    />
+    <NetworkSection
+      v-model:bypass="bypassRedir"
+      head="REDIR-TPROXY · 网络参数（TCP REDIRECT + UDP TPROXY）"
+      show-redirect
+      :env="settings.modes['redir-tproxy']!.env!"
+    />
 
-    <!-- ─── REDIR-TPROXY ─── -->
+    <!-- ─── SOCKS / SERVER ─── -->
     <section class="list card">
-      <div class="list-head">REDIR-TPROXY · 网络参数（TCP REDIRECT + UDP TPROXY）</div>
+      <div class="list-head">SOCKS / SERVER · 入站</div>
       <div class="list-row">
-        <span class="row-label">REDIRECT 端口（TCP）</span>
-        <input v-model.number="settings.modes['redir-tproxy']!.env!.redirect_port" type="number" class="input input-num" />
-      </div>
-      <div class="list-row">
-        <span class="row-label">TPROXY 端口（UDP）</span>
-        <input v-model.number="settings.modes['redir-tproxy']!.env!.tproxy_port" type="number" class="input input-num" />
-      </div>
-      <div class="list-row">
-        <span class="row-label">fwmark</span>
-        <input v-model.number="settings.modes['redir-tproxy']!.env!.fwmark" type="number" class="input input-num" />
-      </div>
-      <div class="list-row">
-        <span class="row-label">路由表 ID</span>
-        <input v-model.number="settings.modes['redir-tproxy']!.env!.table_id" type="number" class="input input-num" />
-      </div>
-      <div class="list-row">
-        <span class="row-label">nftables 表名</span>
-        <input v-model="settings.modes['redir-tproxy']!.env!.nftables_table" class="input" />
-      </div>
-      <div class="list-row">
-        <span class="row-label">回环避免方式</span>
-        <div class="seg-mini">
-          <button :class="{ on: bypassRedir === 'gid' }" @click="bypassRedir = 'gid'">GID 放行</button>
-          <button :class="{ on: bypassRedir === 'mark' }" @click="bypassRedir = 'mark'">Mark 放行</button>
-        </div>
-      </div>
-      <div class="list-row">
-        <span class="row-label">排除 GID（mihomo 用户组）</span>
+        <span class="row-label">SOCKS 入站监听端口</span>
         <div class="control">
-          <input v-model.number="settings.modes['redir-tproxy']!.env!.exclude_gid" type="number" class="input input-num" />
-          <small class="row-hint">meta skgid · 放行 mihomo 用户组流量</small>
+          <input v-model.number="settings.modes.socks!.env!.socks_port" type="number" class="input input-num" />
+          <small class="row-hint">mixed 入站 · 默认 20260</small>
         </div>
       </div>
-      <div class="list-row">
-        <span class="row-label">路由 mark</span>
-        <div class="control">
-          <input v-model.number="settings.modes['redir-tproxy']!.env!.routing_mark" type="number" class="input input-num" />
-          <small class="row-hint">meta mark · 放行已打标流量</small>
-        </div>
-      </div>
-    </section>
-
-    <!-- ─── SERVER / SOCKS ─── -->
-    <section class="list card">
-      <div class="list-head">SERVER / SOCKS · 预定义入站</div>
       <details class="list-details">
         <summary>
           <span>SERVER 独立入站（默认 mixed 20261）</span>
@@ -214,15 +157,6 @@ async function save() {
         </summary>
         <div class="details-body">
           <textarea v-model="settings.modes.server!.preset" class="code" style="min-height: 160px"></textarea>
-        </div>
-      </details>
-      <details class="list-details">
-        <summary>
-          <span>SOCKS 入站（默认 mixed 20260）</span>
-          <Icon name="chevron-down" :size="15" class="chev" />
-        </summary>
-        <div class="details-body">
-          <textarea v-model="settings.modes.socks!.preset" class="code" style="min-height: 160px"></textarea>
         </div>
       </details>
     </section>

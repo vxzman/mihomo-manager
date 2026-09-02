@@ -9,6 +9,8 @@ import { fetchStatus, modeAction, subscribeStatus, type Status } from './api'
 type View = 'status' | 'config' | 'settings'
 const view = ref<View>('status')
 const status = ref<Status | null>(null)
+// null = 尚未确定，true = 可达，false = 不可达
+const connected = ref<boolean | null>(null)
 const loading = ref(false)
 const message = ref<{ ok: boolean; text: string } | null>(null)
 let messageTimer: ReturnType<typeof setTimeout> | null = null
@@ -17,7 +19,13 @@ let unsubscribe: (() => void) | null = null
 
 onMounted(() => {
   refresh()
-  unsubscribe = subscribeStatus((s) => (status.value = s))
+  unsubscribe = subscribeStatus(
+    (s) => {
+      status.value = s
+      connected.value = true
+    },
+    (ok) => (connected.value = ok),
+  )
 })
 
 onUnmounted(() => {
@@ -28,17 +36,38 @@ onUnmounted(() => {
 async function refresh() {
   try {
     status.value = await fetchStatus()
+    connected.value = true
   } catch {
-    /* 守护进程暂不可达，SSE 重连后恢复 */
+    connected.value = false
   }
+}
+
+async function retry() {
+  connected.value = null
+  await refresh()
 }
 
 async function onModeAction(mode: string, action: 'start' | 'stop') {
   loading.value = true
   try {
     await modeAction(mode, action)
-    showMessage(true, `模式 ${mode} ${action === 'start' ? '启动' : '停止'}指令已执行`)
     await refresh()
+    // 依据刷新后的真实状态反馈结果，而非只报「指令已执行」
+    const ms = status.value?.modes[mode]
+    const label = ms?.label ?? mode
+    let text: string
+    let ok = true
+    if (action === 'start') {
+      if (ms?.active) text = `${label} 已启动`
+      else if (ms?.unit_state === 'failed') {
+        text = `${label} 启动失败`
+        ok = false
+      } else text = `${label} 启动指令已下发，守护进程编排中`
+    } else {
+      if (!ms || !ms.active) text = `${label} 已停止`
+      else text = `${label} 停止指令已下发，守护进程编排中`
+    }
+    showMessage(ok, text)
   } catch (e) {
     showMessage(false, (e as Error).message)
   } finally {
@@ -95,9 +124,19 @@ const activeLabel = () => {
     </header>
 
     <main class="main">
-      <StatusView v-if="view === 'status'" :status="status" :loading="loading" @action="onModeAction" />
-      <ConfigView v-else-if="view === 'config'" />
-      <SettingsView v-else />
+      <!-- KeepAlive：切换页签不销毁视图，配置编辑器内容与表单状态得以保留 -->
+      <KeepAlive>
+        <StatusView
+          v-if="view === 'status'"
+          :status="status"
+          :connected="connected"
+          :loading="loading"
+          @action="onModeAction"
+          @refresh="retry"
+        />
+        <ConfigView v-else-if="view === 'config'" />
+        <SettingsView v-else />
+      </KeepAlive>
 
       <transition name="fade">
         <div v-if="message" class="toast" :class="message.ok ? 'ok' : 'err'">

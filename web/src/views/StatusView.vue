@@ -5,10 +5,12 @@ import type { Status, ModeStatus } from '../api'
 
 const props = defineProps<{
   status: Status | null
+  // null = 尚未确定，true = 可达，false = 不可达
+  connected: boolean | null
   loading: boolean
 }>()
 
-defineEmits<{ (e: 'action', mode: string, action: 'start' | 'stop'): void }>()
+defineEmits<{ (e: 'action', mode: string, action: 'start' | 'stop'): void; (e: 'refresh'): void }>()
 
 const modeOrder = ['tun', 'tproxy', 'redir-tproxy', 'socks', 'server']
 
@@ -22,8 +24,7 @@ const modeIcons: Record<string, string> = {
 
 const entries = computed(() => {
   if (!props.status) return []
-  const names = [...modeOrder, ...Object.keys(props.status.modes).filter((n) => !modeOrder.includes(n))]
-  return names
+  return modeOrder
     .filter((n) => props.status!.modes[n])
     .map((n, i) => ({ name: n, index: i, icon: modeIcons[n] ?? 'zap', ...props.status!.modes[n] }))
 })
@@ -66,12 +67,31 @@ function unitClass(s: string): string {
   <div>
     <div class="page-head">
       <h1><Icon name="activity" :size="22" /> 运行状态</h1>
-      <p class="sub">切换模式由守护进程编排：先停互斥模式，启动实例后延迟套用规则，规则与实例同生共死。</p>
     </div>
+
+    <!-- ─── hero：不可达 ─── -->
+    <section v-if="!status && connected === false" class="hero error">
+      <div class="hero-icon"><Icon name="alert-triangle" :size="30" /></div>
+      <div class="hero-info">
+        <div class="hero-title"><b>守护进程不可达</b></div>
+        <div class="hero-unit">无法连接后端服务，请检查 mihomo-manager 守护进程是否运行</div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn primary lg" @click="$emit('refresh')">
+          <Icon name="refresh-cw" :size="14" /> 重试
+        </button>
+      </div>
+    </section>
+
+    <!-- ─── hero：连接中 ─── -->
+    <section v-else-if="!status" class="hero idle">
+      <div class="hero-icon"><Icon name="power" :size="30" /></div>
+      <div class="hero-info"><div class="hero-title"><b>连接中…</b></div></div>
+    </section>
 
     <!-- ─── hero：活跃模式 ─── -->
     <section
-      v-if="active"
+      v-else-if="active"
       class="hero"
       :class="`c-${active.name}`"
     >
@@ -104,7 +124,6 @@ function unitClass(s: string): string {
       <div class="hero-icon"><Icon name="power" :size="30" /></div>
       <div class="hero-info">
         <div class="hero-title"><b>无活跃模式</b></div>
-        <div class="hero-unit">点击下方任一模式瓦片的「启动」，守护进程将自动编排切换</div>
       </div>
     </section>
 
@@ -127,7 +146,7 @@ function unitClass(s: string): string {
         </div>
 
         <div class="tile-meta">
-          <span class="badge" :class="unitClass(m.unit_state)">
+          <span v-if="m.unit_state !== 'inactive'" class="badge" :class="unitClass(m.unit_state)">
             {{ unitText[m.unit_state] ?? m.unit_state }}
           </span>
           <span class="badge" :class="rulesClass(m)">
