@@ -41,16 +41,18 @@ type Cleanup struct {
 	NftTables []string `yaml:"nft_tables" json:"nft_tables"`
 }
 
-// Env 承载透明代理模式（tproxy / redir-tproxy）的网络参数。
+// Env 承载各模式的网络参数：tproxy / redir-tproxy 的透明代理参数，
+// socks 的入站监听端口。
 // 回环避免：ExcludeGID（meta skgid）优先，RoutingMark（meta mark）备选，至少其一。
 type Env struct {
-	TproxyPort    int    `yaml:"tproxy_port" json:"tproxy_port"`
+	TproxyPort    int    `yaml:"tproxy_port,omitempty" json:"tproxy_port,omitempty"`
 	RedirectPort  int    `yaml:"redirect_port,omitempty" json:"redirect_port,omitempty"`
+	SocksPort     int    `yaml:"socks_port,omitempty" json:"socks_port,omitempty"`
 	ExcludeGID    int    `yaml:"exclude_gid,omitempty" json:"exclude_gid,omitempty"`
 	RoutingMark   int    `yaml:"routing_mark,omitempty" json:"routing_mark,omitempty"`
-	Fwmark        int    `yaml:"fwmark" json:"fwmark"`
-	TableID       int    `yaml:"table_id" json:"table_id"`
-	NftablesTable string `yaml:"nftables_table" json:"nftables_table"`
+	Fwmark        int    `yaml:"fwmark,omitempty" json:"fwmark,omitempty"`
+	TableID       int    `yaml:"table_id,omitempty" json:"table_id,omitempty"`
+	NftablesTable string `yaml:"nftables_table,omitempty" json:"nftables_table,omitempty"`
 }
 
 // ─── 默认配置 ────────────────────────────────────────────────
@@ -61,6 +63,7 @@ const (
 	// 与旧面板/脚本保持一致的默认值，迁移时被旧 .conf 覆盖。
 	defaultTproxyPort   = 22016
 	defaultRedirectPort = 22017
+	defaultSocksPort    = 20260
 	defaultExcludeGID   = 988
 	defaultRoutingMark  = 6666
 	defaultFwmark       = 1
@@ -104,13 +107,6 @@ const redirTproxyPreset = `  - name: tproxy-in
     type: redir
     port: 22017
     listen: 0.0.0.0
-`
-
-const socksPreset = `  - name: mixed-in
-    type: mixed
-    port: 20260
-    listen: 0.0.0.0
-    udp: true
 `
 
 const serverPreset = `  - name: server-in
@@ -183,7 +179,9 @@ func Default() *ManagerConfig {
 				Label:  "SOCKS",
 				Unit:   "mihomo@socks",
 				Config: "config_socks.yaml",
-				Preset: socksPreset,
+				Env: &Env{
+					SocksPort: defaultSocksPort,
+				},
 			},
 			"server": {
 				Label:  "SERVER",

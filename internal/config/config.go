@@ -106,7 +106,37 @@ func fillDefaults(cfg *ManagerConfig) {
 		if m.Config == "" {
 			m.Config = "config_" + name + ".yaml"
 		}
+		// socks 入站由 env.socks_port 驱动：老版本端口藏在 preset 里，
+		// 这里迁移取值并清掉 preset，端口成为唯一事实源。
+		if name == "socks" {
+			if m.Env == nil {
+				m.Env = &Env{}
+			}
+			if m.Env.SocksPort <= 0 {
+				m.Env.SocksPort = socksPortFromPreset(m.Preset)
+			}
+			m.Preset = ""
+		}
 	}
+}
+
+// socksPortFromPreset 从旧版 socks preset 的监听项中提取端口，取不到用默认值。
+func socksPortFromPreset(preset string) int {
+	if preset == "" {
+		return defaultSocksPort
+	}
+	var doc struct {
+		Listeners []map[string]interface{} `yaml:"listeners"`
+	}
+	if err := yaml.Unmarshal([]byte("listeners:\n"+preset), &doc); err != nil {
+		return defaultSocksPort
+	}
+	for _, l := range doc.Listeners {
+		if port, ok := l["port"].(int); ok && port > 0 {
+			return port
+		}
+	}
+	return defaultSocksPort
 }
 
 // Validate 检查结构完整性；tproxy/redir-tproxy 的回环避免必须 gid/mark 至少其一。
@@ -139,6 +169,10 @@ func Validate(cfg *ManagerConfig) error {
 		case "tun":
 			if m.Routing == nil || m.Routing.TableIndex <= 0 {
 				return fmt.Errorf("模式 tun 缺少 routing.table_index")
+			}
+		case "socks":
+			if m.Env == nil || m.Env.SocksPort <= 0 {
+				return fmt.Errorf("模式 socks 缺少 env.socks_port")
 			}
 		}
 		if m.Preset != "" {

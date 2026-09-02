@@ -186,7 +186,7 @@ func (a *API) handleGetSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePutSettings 合并更新 manager.yaml：只动客户端提供的字段
-// （env/routing/preset 整体替换），preset 变化后自动 config sync。
+// （env/routing/preset 整体替换），preset 或 socks 端口变化后自动 config sync。
 func (a *API) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	var body settingsUpdate
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -194,7 +194,7 @@ func (a *API) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	presetChanged := false
+	syncNeeded := false
 	for name, up := range body.Modes {
 		md, ok := a.cfg.Modes[name]
 		if !ok || up == nil {
@@ -202,6 +202,10 @@ func (a *API) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 		}
 		if up.Env != nil {
 			md.Env = up.Env
+			if name == "socks" {
+				// socks 入站由 env.socks_port 生成，端口变化需要重新生成配置
+				syncNeeded = true
+			}
 		}
 		if up.Routing != nil {
 			md.Routing = up.Routing
@@ -212,7 +216,7 @@ func (a *API) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			md.Preset = up.Preset
-			presetChanged = true
+			syncNeeded = true
 		}
 	}
 	if body.Daemon != nil {
@@ -225,7 +229,7 @@ func (a *API) handlePutSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// preset/env 变化影响生成配置：同步各模式配置（通用配置存在时）。
-	if presetChanged {
+	if syncNeeded {
 		if _, err := os.Stat(a.cfg.GeneralPath()); err == nil {
 			if err := config.SyncAll(a.cfg, ""); err != nil {
 				writeErr(w, http.StatusInternalServerError, err)

@@ -16,7 +16,8 @@ const GeneralConfig = "config_general.yaml"
 
 // ─── 配置同步 ────────────────────────────────────────────────
 // 单一事实源：config_general.yaml（用户代理配置） + manager.yaml 各模式
-// preset（预定义入站）。SyncAll 将两者合并生成全部 config_<mode>.yaml。
+// preset（预定义入站；socks 由 env.socks_port 生成）。SyncAll 将两者合并
+// 生成全部 config_<mode>.yaml。
 
 func (c *ManagerConfig) GeneralPath() string {
 	return filepath.Join(c.ConfigDir(), GeneralConfig)
@@ -75,7 +76,11 @@ func SyncAll(c *ManagerConfig, content string) error {
 		return err
 	}
 	for name := range c.Modes {
-		cfg, err := buildModeConfig(general, c.Modes[name].Preset)
+		listeners, err := modeListeners(c.Modes[name], name)
+		if err != nil {
+			return fmt.Errorf("生成 %s 配置失败: %w", name, err)
+		}
+		cfg, err := buildModeConfig(general, listeners)
 		if err != nil {
 			return fmt.Errorf("生成 %s 配置失败: %w", name, err)
 		}
@@ -121,16 +126,33 @@ func ValidatePreset(preset string) error {
 	return nil
 }
 
-// buildModeConfig 将通用配置与模式 preset 合并：用户自写 listeners 保留，
-// preset 中同名不覆盖、缺名追加。
-func buildModeConfig(general map[string]interface{}, preset string) ([]byte, error) {
-	var presetData struct {
+// modeListeners 返回模式的预定义入站列表：socks 由 env.socks_port 生成
+//（端口即事实源，与透明代理模式一致），其余模式解析 preset。
+func modeListeners(m *Mode, name string) ([]map[string]interface{}, error) {
+	if name == "socks" {
+		if m.Env == nil || m.Env.SocksPort <= 0 {
+			return nil, fmt.Errorf("缺少 env.socks_port")
+		}
+		return []map[string]interface{}{{
+			"name":   "mixed-in",
+			"type":   "mixed",
+			"port":   m.Env.SocksPort,
+			"listen": "0.0.0.0",
+			"udp":    true,
+		}}, nil
+	}
+	var doc struct {
 		Listeners []map[string]interface{} `yaml:"listeners"`
 	}
-	if err := yaml.Unmarshal([]byte("listeners:\n"+preset), &presetData); err != nil {
+	if err := yaml.Unmarshal([]byte("listeners:\n"+m.Preset), &doc); err != nil {
 		return nil, fmt.Errorf("解析预定义配置失败: %w", err)
 	}
+	return doc.Listeners, nil
+}
 
+// buildModeConfig 将通用配置与模式预定义入站合并：用户自写 listeners 保留，
+// 预定义中同名不覆盖、缺名追加。
+func buildModeConfig(general map[string]interface{}, listeners []map[string]interface{}) ([]byte, error) {
 	cfg := make(map[string]interface{}, len(general)+1)
 	for k, v := range general {
 		cfg[k] = v
@@ -145,7 +167,7 @@ func buildModeConfig(general map[string]interface{}, preset string) ([]byte, err
 				}
 			}
 		}
-		for _, pl := range presetData.Listeners {
+		for _, pl := range listeners {
 			name, _ := pl["name"].(string)
 			if name != "" && existingNames[name] {
 				continue
@@ -153,8 +175,8 @@ func buildModeConfig(general map[string]interface{}, preset string) ([]byte, err
 			existing = append(existing, pl)
 		}
 		cfg["listeners"] = existing
-	} else if len(presetData.Listeners) > 0 {
-		cfg["listeners"] = presetData.Listeners
+	} else if len(listeners) > 0 {
+		cfg["listeners"] = listeners
 	}
 
 	return yaml.Marshal(cfg)
