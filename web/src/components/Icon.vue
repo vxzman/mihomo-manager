@@ -3,8 +3,10 @@
 const props = withDefaults(defineProps<{ name: string; size?: number }>(), { size: 18 })
 
 const icons: Record<string, string> = {
+  mihomo:
+    '<path d="M4.6 13.5a7.4 7.4 0 1 0 14.8 0 7.4 7.4 0 1 0-14.8 0"></path><path d="M5.3 11.3 7.5 2.7c.2-.7 1.4-.7 1.6 0l1.4 3.96"></path><path d="M18.7 11.3l-2.2-8.6c-.2-.7-1.4-.7-1.6 0l-1.4 3.96"></path><circle cx="9.2" cy="13.1" r="1.6" fill="currentColor" stroke="none"></circle><circle cx="14.8" cy="13.1" r="1.6" fill="currentColor" stroke="none"></circle><path d="M11.2 16.3l.8.8.8-.8"></path><path d="M9.7 18.4c.7.9 3.9.9 4.6 0"></path><path d="M3.3 12.3l2.3.9M3.3 15l2.3-.5M20.7 12.3l-2.3.9M20.7 15l-2.3-.5"></path>',
   cat:
-    '<path d="M12 3L8.5 7.5L5.8 4.5L5.5 10A6.5 6.5 0 0 1 18.5 10L18.2 4.5L15.5 7.5Z"></path><circle cx="9.5" cy="13" r="1"></circle><circle cx="14.5" cy="13" r="1"></circle><path d="M11.2 15.3h1.6M9.8 16.8c.7.7 3.7.7 4.4 0"></path><path d="M2 12l3 .8M2 14.8l3-.5M22 12l-3 .8M22 14.8l-3-.5"></path>',
+    '<path d="M4.6 13.5a7.4 7.4 0 1 0 14.8 0 7.4 7.4 0 1 0-14.8 0"></path><path d="M5.3 11.3 7.5 2.7c.2-.7 1.4-.7 1.6 0l1.4 3.96"></path><path d="M18.7 11.3l-2.2-8.6c-.2-.7-1.4-.7-1.6 0l-1.4 3.96"></path><circle cx="9.2" cy="13.1" r="1.6" fill="currentColor" stroke="none"></circle><circle cx="14.8" cy="13.1" r="1.6" fill="currentColor" stroke="none"></circle><path d="M11.2 16.3l.8.8.8-.8"></path><path d="M9.7 18.4c.7.9 3.9.9 4.6 0"></path><path d="M3.3 12.3l2.3.9M3.3 15l2.3-.5M20.7 12.3l-2.3.9M20.7 15l-2.3-.5"></path>',
   activity:
     '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>',
   shuffle:

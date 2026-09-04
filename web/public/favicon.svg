@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="4" y1="3" x2="28" y2="29" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff7657"/>
+      <stop offset=".58" stop-color="#e8435f"/>
+      <stop offset="1" stop-color="#b83280"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="10" fill="url(#g)"/>
+  <!-- 经典 Clash 猫（抽象）：圆脸 + 双尖耳 + 大圆眼 + 鼻 + ω 嘴 + 胡须 -->
+  <path d="M6.1 18a9.9 9.9 0 1 0 19.8 0 9.9 9.9 0 1 0-19.8 0" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M7.07 15.07 10 3.6c.27-.93 1.87-.93 2.14 0l1.86 5.28" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24.93 15.07l-2.93-11.47c-.27-.93-1.87-.93-2.14 0l-1.86 5.28" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="12.3" cy="17.5" r="2.1" fill="#fff"/>
+  <circle cx="19.7" cy="17.5" r="2.1" fill="#fff"/>
+  <path d="M14.9 21.7l1.1 1.1 1.1-1.1" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12.9 24.5c.93 1.2 5.27 1.2 6.2 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <path d="M4.4 16.4l3.1 1.2M4.4 20l3.1-.7M27.6 16.4l-3.1 1.2M27.6 20l-3.1-.7" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
+</svg>
