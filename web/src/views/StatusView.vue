@@ -29,9 +29,10 @@ const entries = computed(() => {
     .map((n, i) => ({ name: n, index: i, icon: modeIcons[n] ?? 'zap', ...props.status!.modes[n] }))
 })
 
-// hero 展示活跃模式；瓦片展示其余模式（无活跃模式时展示全部）
+// Phase 3.1: hero 只展示活跃模式的状态信息（紧凑顶条）；tiles 展示全部模式
 const active = computed(() => entries.value.find((m) => m.active) ?? null)
-const tiles = computed(() => entries.value.filter((m) => m !== active.value))
+// 所有模式都进入网格，活跃模式用 c-{name} class 区分
+const tiles = computed(() => entries.value)
 
 const rulesText: Record<string, string> = {
   present: '规则就位',
@@ -66,18 +67,18 @@ function unitClass(s: string): string {
 <template>
   <div>
     <div class="page-head">
-      <h1><Icon name="activity" :size="22" /> 运行状态</h1>
+      <h1><Icon name="activity" :size="18" /> 运行状态</h1>
     </div>
 
     <!-- ─── hero：不可达 ─── -->
     <section v-if="!status && connected === false" class="hero error">
-      <div class="hero-icon"><Icon name="alert-triangle" :size="30" /></div>
+      <div class="hero-icon"><Icon name="alert-triangle" :size="24" /></div>
       <div class="hero-info">
         <div class="hero-title"><b>守护进程不可达</b></div>
         <div class="hero-unit">无法连接后端服务，请检查 mihomo-manager 守护进程是否运行</div>
       </div>
       <div class="hero-actions">
-        <button class="btn primary lg" @click="$emit('refresh')">
+        <button class="btn primary" @click="$emit('refresh')">
           <Icon name="refresh-cw" :size="14" /> 重试
         </button>
       </div>
@@ -85,59 +86,57 @@ function unitClass(s: string): string {
 
     <!-- ─── hero：连接中 ─── -->
     <section v-else-if="!status" class="hero idle">
-      <div class="hero-icon"><Icon name="power" :size="30" /></div>
+      <div class="hero-icon"><Icon name="power" :size="24" /></div>
       <div class="hero-info"><div class="hero-title"><b>连接中…</b></div></div>
     </section>
 
-    <!-- ─── hero：活跃模式 ─── -->
+    <!-- ─── Phase 3.1: 活跃时显示紧凑状态条 ─── -->
     <section
       v-else-if="active"
       class="hero"
       :class="`c-${active.name}`"
     >
-      <div class="hero-icon"><Icon :name="active.icon" :size="30" /></div>
+      <div class="hero-icon"><Icon :name="active.icon" :size="24" /></div>
       <div class="hero-info">
         <div class="hero-title">
           <b>{{ active.label }}</b>
           <small>{{ active.name }}</small>
         </div>
-        <div class="hero-unit">{{ active.unit }}</div>
         <div class="hero-badges">
           <span class="badge" :class="unitClass(active.unit_state)">
             <span class="dot" :class="{ on: active.active }"></span>
             {{ unitText[active.unit_state] ?? active.unit_state }}
           </span>
           <span class="badge" :class="rulesClass(active)">
-            <Icon name="activity" :size="12" />
             {{ rulesText[active.rules] ?? active.rules }}
           </span>
         </div>
       </div>
       <div class="hero-actions">
-        <button class="btn danger lg" :disabled="loading" @click="$emit('action', active.name, 'stop')">
+        <!-- 活跃时：次要「停止」按钮（非满宽） -->
+        <button class="btn danger" :disabled="loading" @click="$emit('action', active.name, 'stop')">
           <Icon name="stop" :size="14" /> 停止
         </button>
       </div>
     </section>
 
     <section v-else class="hero idle">
-      <div class="hero-icon"><Icon name="power" :size="30" /></div>
+      <div class="hero-icon"><Icon name="power" :size="24" /></div>
       <div class="hero-info">
         <div class="hero-title"><b>无活跃模式</b></div>
       </div>
     </section>
 
-    <!-- ─── 模式瓦片 ─── -->
+    <!-- ─── Phase 3.1: 所有模式网格（同等权重），活跃态用顶部 accent 线区分 ─── -->
     <div class="tiles">
       <div
         v-for="m in tiles"
         :key="m.name"
         class="tile"
-        :class="`c-${m.name}`"
-        :style="{ animationDelay: `${m.index * 0.05}s` }"
+        :class="[`c-${m.name}`, { 'tile-active': m.active }]"
       >
         <div class="tile-head">
-          <div class="tile-icon"><Icon :name="m.icon" :size="19" /></div>
+          <div class="tile-icon"><Icon :name="m.icon" :size="17" /></div>
           <div class="tile-title">
             <b>{{ m.label }}</b>
             <small>{{ m.name }}</small>
@@ -154,7 +153,21 @@ function unitClass(s: string): string {
           </span>
         </div>
 
-        <button class="btn primary tile-start" :disabled="loading" @click="$emit('action', m.name, 'start')">
+        <!-- Phase 3.1: 活跃模式显示「停止」，非活跃显示「启动」 -->
+        <button
+          v-if="m.active"
+          class="btn danger tile-start"
+          :disabled="loading"
+          @click="$emit('action', m.name, 'stop')"
+        >
+          <Icon name="stop" :size="14" /> 停止
+        </button>
+        <button
+          v-else
+          class="btn primary tile-start"
+          :disabled="loading"
+          @click="$emit('action', m.name, 'start')"
+        >
           <Icon name="power" :size="14" /> 启动
         </button>
       </div>

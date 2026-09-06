@@ -98,7 +98,9 @@ const activeLabel = () => {
   <div class="app">
     <header class="topnav">
       <div class="logo">
-        <div class="logo-mark"><Icon name="mihomo" :size="22" /></div>
+        <div class="logo-mark">
+          <img src="/logo.svg" alt="Mihomo Manager" class="logo-img" />
+        </div>
         <div class="logo-text">
           <b>Mihomo Manager</b>
         </div>

@@ -1,0 +1,51 @@
+<svg width="200" height="195" viewBox="0 0 200 195" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mihomo Manager">
+  <title>Mihomo Manager</title>
+  <defs>
+    <linearGradient id="catGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3C5C8A" />
+      <stop offset="100%" stop-color="#122242" />
+    </linearGradient>
+  </defs>
+
+  <!-- 尾巴：从身体左下方甩出并向内卷成钩子状 -->
+  <path
+    d="M55,150
+       C25,150 15,130 22,110
+       C26,100 40,98 46,105
+       C36,110 30,122 45,138
+       C48,142 50,146 55,150
+       Z"
+    fill="url(#catGrad)"
+  />
+
+  <!-- 头部 + 身体：盾牌形轮廓，两侧耳朵为尖细三角形，直接融入外轮廓 -->
+  <path
+    d="M70,28
+       Q80,42 87,50
+       Q106,58 125,50
+       Q132,42 141,28
+       Q150,44 156,58
+       Q166,95 160,150
+       Q158,156 152,156
+       L60,156
+       Q54,156 52,150
+       Q46,95 56,59
+       Q62,44 70,28
+       Z"
+    fill="url(#catGrad)"
+  />
+
+  <!-- 眼睛 -->
+  <circle cx="83" cy="88" r="7.5" fill="#FFFFFF" />
+  <circle cx="129" cy="88" r="7.5" fill="#FFFFFF" />
+
+  <!-- 嘴巴：经典猫咪 "w" 双波浪嘴 -->
+  <path
+    d="M96,101 Q101,108 106,101 Q111,108 116,101"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
