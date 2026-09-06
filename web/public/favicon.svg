@@ -1,19 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
-    <linearGradient id="g" x1="4" y1="3" x2="28" y2="29" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#ff7657"/>
-      <stop offset=".58" stop-color="#e8435f"/>
-      <stop offset="1" stop-color="#b83280"/>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3C5C8A"/>
+      <stop offset="100%" stop-color="#122242"/>
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="10" fill="url(#g)"/>
-  <!-- 经典 Clash 猫（抽象）：圆脸 + 双尖耳 + 大圆眼 + 鼻 + ω 嘴 + 胡须 -->
-  <path d="M6.1 18a9.9 9.9 0 1 0 19.8 0 9.9 9.9 0 1 0-19.8 0" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
-  <path d="M7.07 15.07 10 3.6c.27-.93 1.87-.93 2.14 0l1.86 5.28" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M24.93 15.07l-2.93-11.47c-.27-.93-1.87-.93-2.14 0l-1.86 5.28" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="12.3" cy="17.5" r="2.1" fill="#fff"/>
-  <circle cx="19.7" cy="17.5" r="2.1" fill="#fff"/>
-  <path d="M14.9 21.7l1.1 1.1 1.1-1.1" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M12.9 24.5c.93 1.2 5.27 1.2 6.2 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
-  <path d="M4.4 16.4l3.1 1.2M4.4 20l3.1-.7M27.6 16.4l-3.1 1.2M27.6 20l-3.1-.7" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round"/>
+  <!-- 圆角背景 -->
+  <rect width="32" height="32" rx="8" fill="url(#g)"/>
+  <!-- 头部+身体+耳朵（缩放自 logo.svg，viewBox 0 0 200 195 → 32×32） -->
+  <path
+    d="M11.2,4.5 Q12.8,6.7 13.9,8 Q17,9.5 20.1,8 Q21.2,6.7 22.8,4.5 Q24.0,7.0 24.9,9.2 Q26.5,15.1 25.6,24 Q25.3,24.9 24.3,24.9 L9.6,24.9 Q8.6,24.9 8.3,24 Q7.4,15.1 9.0,9.2 Q9.9,7.0 11.2,4.5 Z"
+    fill="#fff" fill-opacity="0.95"
+  />
+  <!-- 眼睛 -->
+  <circle cx="13.3" cy="14.1" r="1.4" fill="#122242"/>
+  <circle cx="20.7" cy="14.1" r="1.4" fill="#122242"/>
+  <!-- 嘴巴 w -->
+  <path
+    d="M14.8,17 Q16,18.4 17,17 Q18,18.4 19.2,17"
+    fill="none" stroke="#122242" stroke-width="0.9"
+    stroke-linecap="round" stroke-linejoin="round"
+  />
 </svg>
