@@ -79,6 +79,7 @@ async function save() {
     <div class="page-head-row">
       <div>
         <h1 class="page-title"><Icon name="sliders" :size="22" /> 系统设置</h1>
+        <p class="sub">守护进程与网络参数</p>
       </div>
       <button class="btn primary" :disabled="saving" @click="save">
         <Icon name="save" :size="15" /> 保存设置
@@ -89,10 +90,12 @@ async function save() {
     <section class="list card">
       <div class="list-head">守护进程</div>
       <div class="list-row">
-        <span class="row-label">Web 监听地址</span>
+        <div class="row-text">
+          <span class="row-label">Web 监听地址</span>
+          <small class="row-hint">无鉴权：默认仅监听 IPv4</small>
+        </div>
         <div class="control">
           <input v-model="settings.daemon.web_addr" class="input" />
-          <small class="row-hint">无鉴权：默认仅监听 IPv4</small>
         </div>
       </div>
       <div class="list-row">
@@ -144,10 +147,12 @@ async function save() {
     <section class="list card">
       <div class="list-head">SOCKS / SERVER · 入站</div>
       <div class="list-row">
-        <span class="row-label">SOCKS 入站监听端口</span>
+        <div class="row-text">
+          <span class="row-label">SOCKS 入站监听端口</span>
+          <small class="row-hint">mixed 入站 · 默认 20260</small>
+        </div>
         <div class="control">
           <input v-model.number="settings.modes.socks!.env!.socks_port" type="number" class="input input-num" />
-          <small class="row-hint">mixed 入站 · 默认 20260</small>
         </div>
       </div>
       <details class="list-details">

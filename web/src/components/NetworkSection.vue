@@ -37,28 +37,33 @@ defineEmits<{ (e: 'update:bypass', v: 'gid' | 'mark'): void }>()
       <input v-model="env.nftables_table" class="input" />
     </div>
     <div class="list-row">
-      <span class="row-label">回环避免方式</span>
+      <div class="row-text">
+        <span class="row-label">回环避免方式</span>
+        <small class="row-hint">GID 优先，Mark 备选</small>
+      </div>
       <div class="seg-mini">
-        <button :class="{ on: bypass === 'gid' }" @click="$emit('update:bypass', 'gid')">GID 放行</button>
-        <button :class="{ on: bypass === 'mark' }" @click="$emit('update:bypass', 'mark')">Mark 放行</button>
+        <button type="button" :class="{ on: bypass === 'gid' }" @click="$emit('update:bypass', 'gid')">GID</button>
+        <button type="button" :class="{ on: bypass === 'mark' }" @click="$emit('update:bypass', 'mark')">Mark</button>
       </div>
     </div>
     <div class="list-row">
       <span class="row-label">排除 GID（mihomo 用户组）</span>
+      <div class="row-text">
+        <span class="row-label">排除 GID（mihomo 用户组）</span>
+        <small class="row-hint">{{ bypass === 'gid' ? 'meta skgid · mihomo 用户组流量' : '当前方式未启用，保存时将清零' }}</small>
+      </div>
       <div class="control">
         <input v-model.number="env.exclude_gid" type="number" class="input input-num" :disabled="bypass !== 'gid'" />
-        <small class="row-hint">
-          {{ bypass === 'gid' ? 'meta skgid · 放行 mihomo 用户组流量' : '当前方式未启用，保存时将清零' }}
-        </small>
       </div>
     </div>
     <div class="list-row">
       <span class="row-label">路由 mark</span>
+      <div class="row-text">
+        <span class="row-label">路由 mark</span>
+        <small class="row-hint">{{ bypass === 'mark' ? 'meta mark · 已打标流量' : '当前方式未启用，保存时将清零' }}</small>
+      </div>
       <div class="control">
         <input v-model.number="env.routing_mark" type="number" class="input input-num" :disabled="bypass !== 'mark'" />
-        <small class="row-hint">
-          {{ bypass === 'mark' ? 'meta mark · 放行已打标流量' : '当前方式未启用，保存时将清零' }}
-        </small>
       </div>
     </div>
   </section>

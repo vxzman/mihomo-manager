@@ -65,9 +65,10 @@ function unitClass(s: string): string {
 </script>
 
 <template>
-  <div>
+  <div class="status-page">
     <div class="page-head">
       <h1><Icon name="activity" :size="18" /> 运行状态</h1>
+      <p class="sub">选择并切换 mihomo 透明代理模式</p>
     </div>
 
     <!-- ─── hero：不可达 ─── -->
@@ -128,7 +129,9 @@ function unitClass(s: string): string {
     </section>
 
     <!-- ─── Phase 3.1: 所有模式网格（同等权重），活跃态用顶部 accent 线区分 ─── -->
-    <div class="tiles">
+    <section class="section">
+      <h2 class="section-title">模式</h2>
+      <div class="tiles">
       <div
         v-for="m in tiles"
         :key="m.name"
@@ -154,23 +157,26 @@ function unitClass(s: string): string {
         </div>
 
         <!-- Phase 3.1: 活跃模式显示「停止」，非活跃显示「启动」 -->
-        <button
-          v-if="m.active"
-          class="btn danger tile-start"
-          :disabled="loading"
-          @click="$emit('action', m.name, 'stop')"
-        >
-          <Icon name="stop" :size="14" /> 停止
-        </button>
-        <button
-          v-else
-          class="btn primary tile-start"
-          :disabled="loading"
-          @click="$emit('action', m.name, 'start')"
-        >
-          <Icon name="power" :size="14" /> 启动
-        </button>
+        <div class="tile-actions">
+          <button
+            v-if="m.active"
+            class="btn danger"
+            :disabled="loading"
+            @click="$emit('action', m.name, 'stop')"
+          >
+            <Icon name="stop" :size="14" /> 停止
+          </button>
+          <button
+            v-else
+            class="btn primary"
+            :disabled="loading"
+            @click="$emit('action', m.name, 'start')"
+          >
+            <Icon name="power" :size="14" /> 启动
+          </button>
+        </div>
       </div>
-    </div>
+      </div>
+    </section>
   </div>
 </template>

@@ -89,7 +89,7 @@ const nav: { key: View; label: string; icon: string }[] = [
 
 const activeLabel = () => {
   const s = status.value
-  if (!s || !s.active_mode) return '无活跃模式'
+  if (!s || !s.active_mode) return '未运行'
   return s.modes[s.active_mode]?.label ?? s.active_mode
 }
 </script>
@@ -127,18 +127,20 @@ const activeLabel = () => {
 
     <main class="main">
       <!-- KeepAlive：切换页签不销毁视图，配置编辑器内容与表单状态得以保留 -->
-      <KeepAlive>
-        <StatusView
-          v-if="view === 'status'"
-          :status="status"
-          :connected="connected"
-          :loading="loading"
-          @action="onModeAction"
-          @refresh="retry"
-        />
-        <ConfigView v-else-if="view === 'config'" />
-        <SettingsView v-else />
-      </KeepAlive>
+      <div class="content">
+        <KeepAlive>
+          <StatusView
+            v-if="view === 'status'"
+            :status="status"
+            :connected="connected"
+            :loading="loading"
+            @action="onModeAction"
+            @refresh="retry"
+          />
+          <ConfigView v-else-if="view === 'config'" />
+          <SettingsView v-else />
+        </KeepAlive>
+      </div>
 
       <transition name="fade">
         <div v-if="message" class="toast" :class="message.ok ? 'ok' : 'err'">

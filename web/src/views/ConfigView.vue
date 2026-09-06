@@ -80,7 +80,8 @@ async function sync() {
 <template>
   <div>
     <div class="page-head">
-      <h1><Icon name="file" :size="22" /> 配置管理</h1>
+      <h1><Icon name="file" :size="22" /> 配置</h1>
+      <p class="sub">编辑通用配置并同步到各模式</p>
     </div>
 
     <div class="config-panes">
@@ -113,7 +114,7 @@ async function sync() {
         <div class="editor-toolbar">
           <span class="file-badge"><Icon name="file" :size="13" /> {{ fileName }}</span>
           <span class="spacer"></span>
-          <button v-if="isGeneral" class="btn primary" :disabled="loading" @click="save">
+          <button v-if="isGeneral" class="btn primary" :disabled="loading || !dirty" @click="save">
             <span v-if="dirty" class="dirty-dot" title="有未保存的修改"></span>
             <Icon name="save" :size="15" /> 保存并同步
           </button>
